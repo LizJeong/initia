@@ -41,9 +41,18 @@ jobs:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
         run: |
           gsutil cp ./build/initia_${GITHUB_REF#refs/tags/}_Linux_amd64.tar.gz gs://${GCS_BUCKET}/initia/
-          # 파일을 공개적으로 접근 가능하게 설정
-          gsutil acl ch -u AllUsers:R gs://${GCS_BUCKET}/initia/initia_${GITHUB_REF#refs/tags/}_Linux_amd64.tar.gz
-
+          
+      - name: Verify upload
+        env:
+          GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
+        run: |
+          if gsutil stat gs://${GCS_BUCKET}/initia/initia_${GITHUB_REF#refs/tags/}_Linux_amd64.tar.gz; then
+            echo "File successfully uploaded"
+          else
+            echo "File upload failed"
+            exit 1
+          fi
+          
       - name: Generate public URL
         env:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
