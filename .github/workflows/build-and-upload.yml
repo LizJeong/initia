@@ -5,9 +5,6 @@ on:
     tags:
       - 'v*'
 
-env:
-  GCS_BUCKET: initia-ecosystem-binaries
-
 jobs:
   build-and-upload:
     runs-on: ubuntu-latest
@@ -36,11 +33,15 @@ jobs:
           export_default_credentials: true
 
       - name: Upload to GCS
+        env:
+          GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
         run: |
-          gsutil cp ./build/initia_${GITHUB_REF#refs/tags/}_Linux_amd64.tar.gz gs://${{ env.GCS_BUCKET }}/initia/
+          gsutil cp ./build/initia_${GITHUB_REF#refs/tags/}_Linux_amd64.tar.gz gs://${GCS_BUCKET}/initia/
           # 파일을 공개적으로 접근 가능하게 설정
-          gsutil acl ch -u AllUsers:R gs://${{ env.GCS_BUCKET }}/initia/initia_${GITHUB_REF#refs/tags/}_Linux_amd64.tar.gz
+          gsutil acl ch -u AllUsers:R gs://${GCS_BUCKET}/initia/initia_${GITHUB_REF#refs/tags/}_Linux_amd64.tar.gz
 
       - name: Generate public URL
+        env:
+          GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
         run: |
-          echo "Public URL: https://storage.googleapis.com/${{ env.GCS_BUCKET }}/initia/initia_${GITHUB_REF#refs/tags/}_Linux_amd64.tar.gz" >> $GITHUB_STEP_SUMMARY
+          echo "Public URL: https://storage.googleapis.com/${GCS_BUCKET}/initia/initia_${GITHUB_REF#refs/tags/}_Linux_amd64.tar.gz" >> $GITHUB_STEP_SUMMARY
