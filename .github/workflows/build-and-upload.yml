@@ -1,19 +1,21 @@
 name: Build and Upload to GCS
-
 on:
   push:
     tags:
       - 'v*'
-
 jobs:
   build-and-upload:
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
           go-version: '1.22.4'
 
@@ -25,12 +27,14 @@ jobs:
           mv libcompiler.so libcompiler.amd64.so
           tar -czvf initia_${GITHUB_REF#refs/tags/}_Linux_amd64.tar.gz ./initiad libmovevm.amd64.so libcompiler.amd64.so
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
 
       - name: Upload to GCS
         env:
