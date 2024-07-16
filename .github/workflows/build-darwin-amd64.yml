@@ -10,6 +10,7 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+
     steps:
       - name: Install Rosetta 2
         run: |
@@ -30,7 +31,8 @@ jobs:
           echo "GITHUB_SHA=${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Ensure dependencies
-        run: go mod tidy
+        run: |
+          arch -x86_64 /bin/bash -c "go mod tidy"
 
       - name: Print environment variables
         run: |
