@@ -5,9 +5,10 @@ on:
       arch:
         required: true
         type: string
-      # l1_network_name:
-      #   required: true
-      #   type: string
+
+      l1_network_name:
+        required: true
+        type: string
 jobs:
   build:
     runs-on: macos-13
