@@ -29,6 +29,7 @@ jobs:
           echo "GOARCH=arm64" >> $GITHUB_ENV
           echo "GOOS=linux" >> $GITHUB_ENV
           echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+          echo "CGO_ENABLED=1" >> $GITHUB_ENV
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
             echo "VERSION=${VERSION}" >> $GITHUB_ENV
@@ -43,13 +44,15 @@ jobs:
           echo "GOOS=${GOOS}"
           echo "VERSION=${VERSION}"
           echo "CC=${CC}"
+          echo "CGO_ENABLED=${CGO_ENABLED}"
 
       - name: Build for Linux ARM64
         run: |
           export GOARCH=${GOARCH}
           export GOOS=${GOOS}
           export CC=${CC}
-          make build-linux-with-shared-library
+          export CGO_ENABLED=${CGO_ENABLED}
+          go build -mod=readonly -tags "netgo ledger" -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=initia -X github.com/cosmos/cosmos-sdk/version.AppName=initiad -X github.com/cosmos/cosmos-sdk/version.Version=${VERSION} -X github.com/cosmos/cosmos-sdk/version.Commit=${VERSION} -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -X github.com/cometbft/cometbft/version.TMCoreSemVer=v0.0.0-20240704071957-c46468756c01 -w -s' -trimpath -o build/initiad ./cmd/initiad
           cd ./build
           file initiad
           mkdir -p initia_${VERSION}
