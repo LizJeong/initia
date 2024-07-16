@@ -1,24 +1,23 @@
 name: Build Darwin AMD64 with QEMU
 
 on:
-  workflow_call:
-    inputs:
-      arch:
-        required: true
-        type: string
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
 
 jobs:
   setup:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install dependencies
+      - name: Install QEMU and dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu qemu-user-static binfmt-support gcc-aarch64-linux-gnu
+          sudo apt-get install -y qemu qemu-user-static binfmt-support gcc-multilib
 
   build:
     needs: setup
@@ -31,7 +30,7 @@ jobs:
 
       - name: Set up Go
         run: |
-          wget https://go.dev/dl/go1.22.4.linux-amd64.tar.gz
+          wget https://golang.org/dl/go1.22.4.linux-amd64.tar.gz
           tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz
           export PATH=$PATH:/usr/local/go/bin
 
@@ -52,12 +51,12 @@ jobs:
 
       - name: Build for Darwin AMD64
         run: |
-          CC=aarch64-linux-gnu-gcc
+          CC=gcc
           GOARCH=amd64 GOOS=darwin CGO_ENABLED=1 CC=$CC go build -mod=readonly -tags 'netgo ledger' -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=initia -X github.com/cosmos/cosmos-sdk/version.AppName=initiad -X github.com/cosmos/cosmos-sdk/version.Version=${GITHUB_SHA} -X github.com/cosmos/cosmos-sdk/version.Commit=${GITHUB_SHA} -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -X github.com/cometbft/cometbft/version.TMCoreSemVer=v0.0.0-20240704071957-c46468756c01 -w -s' -trimpath -o build/initiad ./cmd/initiad
           cd ./build
           mkdir -p initia_build
-          mv libmovevm.so initia_build/libmovevm.${GOARCH}.so
-          mv libcompiler.so initia_build/libcompiler.${GOARCH}.so
+          cp ~/go/pkg/mod/github.com/initia-labs/movevm@*/api/libmovevm.dylib initia_build/libmovevm.${GOARCH}.dylib
+          cp ~/go/pkg/mod/github.com/initia-labs/movevm@*/api/libcompiler.dylib initia_build/libcompiler.${GOARCH}.dylib
           mv initiad initia_build/
           tar -czvf initia_Darwin_${GOARCH}.tar.gz initia_build
 
