@@ -34,16 +34,13 @@ jobs:
         run: |
           docker run --rm --platform linux/arm64 -v $(pwd):/go/src/app -w /go/src/app -e GOARCH -e GOOS -e VERSION arm64v8/golang:1.22.4 \
             sh -c "
-              go mod download && 
-              CGO_ENABLED=1 go build -buildvcs=false -o initiad ./cmd/initiad &&
-              # 아래 두 줄은 해당 파일들이 존재한다고 가정합니다. 없다면 주석 처리하세요.
-              go build -buildmode=c-shared -o libmovevm.so ./path/to/movevm &&
-              go build -buildmode=c-shared -o libcompiler.so ./path/to/compiler &&
-              mkdir -p initia_${VERSION} &&
-              mv initiad initia_${VERSION}/ &&
-              mv libmovevm.so initia_${VERSION}/libmovevm.${GOARCH}.so &&
-              mv libcompiler.so initia_${VERSION}/libcompiler.${GOARCH}.so &&
-              tar -czvf initia_${VERSION}_Linux_${GOARCH}.tar.gz initia_${VERSION}
+              cd initia &&
+              make build-linux-with-shared-library &&
+              cd build &&
+              mv libmovevm.so libmovevm.${GOARCH}.so &&
+              mv libcompiler.so libcompiler.${GOARCH}.so &&
+              tar -czvf initia_${VERSION}_Linux_${GOARCH}.tar.gz ./initiad libmovevm.${GOARCH}.so libcompiler.${GOARCH}.so &&
+              mv initia_${VERSION}_Linux_${GOARCH}.tar.gz /go/src/app/
             "
       
       - name: Google Auth
