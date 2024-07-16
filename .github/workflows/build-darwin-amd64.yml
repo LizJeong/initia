@@ -5,6 +5,9 @@ on:
       arch:
         required: true
         type: string
+      l1_network_name:
+        required: true
+        type: string
 jobs:
   build:
     runs-on: macos-12
@@ -21,35 +24,38 @@ jobs:
         run: |
           echo "GOARCH=${{ inputs.arch }}" >> $GITHUB_ENV
           echo "GOOS=darwin" >> $GITHUB_ENV
-          echo "VERSION=${{ github.sha }}" >> $GITHUB_ENV
-
-      - name: Ensure dependencies
-        run: go mod tidy
+          echo "L1_NETWORK_NAME=${{ inputs.l1_network_name }}" >> $GITHUB_ENV
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "L1_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          else
+            echo "L1_VERSION=${GITHUB_SHA}" >> $GITHUB_ENV
+          fi
+          echo "MOVEVM_VERSION=$(go list -m -f '{{.Version}}' github.com/initia-labs/movevm)" >> $GITHUB_ENV
 
       - name: Print environment variables
         run: |
           echo "GOARCH=${GOARCH}"
           echo "GOOS=${GOOS}"
-          echo "VERSION=${VERSION}"
+          echo "L1_VERSION=${L1_VERSION}"
+          echo "L1_NETWORK_NAME=${L1_NETWORK_NAME}"
+          echo "MOVEVM_VERSION=${MOVEVM_VERSION}"
 
       - name: Build for Darwin AMD64
         run: |
-          export GOARCH=${GOARCH}
-          export GOOS=${GOOS}
-          go build -mod=readonly -tags "netgo ledger" -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=initia -X github.com/cosmos/cosmos-sdk/version.AppName=initiad -X github.com/cosmos/cosmos-sdk/version.Version=${VERSION} -X github.com/cosmos/cosmos-sdk/version.Commit=${VERSION} -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -X github.com/cometbft/cometbft/version.TMCoreSemVer=v0.0.0-20240704071957-c46468756c01 -w -s' -trimpath -o build/initiad ./cmd/initiad
-          chmod +x build/initiad
-          ls -lh build/initiad
-          file build/initiad
-          ./build/initiad version || echo "Binary execution failed"
-
-      - name: Package build artifacts
-        run: |
+          cd ../initia
+          make build
           cd ./build
-          mkdir -p initia_build
-          cp ~/go/pkg/mod/github.com/initia-labs/movevm@*/api/libmovevm.dylib initia_build/libmovevm.${GOARCH}.dylib
-          cp ~/go/pkg/mod/github.com/initia-labs/movevm@*/api/libcompiler.dylib initia_build/libcompiler.${GOARCH}.dylib
-          mv initiad initia_build/
-          tar -czvf initia_Darwin_${GOARCH}.tar.gz initia_build
+          cp ~/go/pkg/mod/github.com/initia-labs/movevm@${MOVEVM_VERSION}/api/libmovevm.dylib ./
+          cp ~/go/pkg/mod/github.com/initia-labs/movevm@${MOVEVM_VERSION}/api/libcompiler.dylib ./
+          tar -czvf initia_${L1_VERSION}_Darwin_${GOARCH}.tar.gz initiad libmovevm.dylib libcompiler.dylib
+          mkdir -p ../../networks/${L1_NETWORK_NAME}/binaries/
+          mv ./initia_${L1_VERSION}_Darwin_${GOARCH}.tar.gz ../../networks/${L1_NETWORK_NAME}/binaries/
+          rm -rf ./libmovevm.dylib ./libcompiler.dylib ./initiad
+
+      - name: Verify build
+        run: |
+          ls -lh ../networks/${L1_NETWORK_NAME}/binaries/
+          file ../networks/${L1_NETWORK_NAME}/binaries/initia_${L1_VERSION}_Darwin_${GOARCH}.tar.gz
 
       - name: Google Auth
         uses: 'google-github-actions/auth@v2'
@@ -63,15 +69,15 @@ jobs:
         env:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
         run: |
-          gsutil cp ./build/initia_Darwin_${GOARCH}.tar.gz gs://${GCS_BUCKET}/initia/
+          gsutil cp ../networks/${L1_NETWORK_NAME}/binaries/initia_${L1_VERSION}_Darwin_${GOARCH}.tar.gz gs://${GCS_BUCKET}/initia/
 
       - name: Verify upload and Generate public URL
         env:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
         run: |
-          if gsutil stat gs://${GCS_BUCKET}/initia/initia_Darwin_${GOARCH}.tar.gz; then
+          if gsutil stat gs://${GCS_BUCKET}/initia/initia_${L1_VERSION}_Darwin_${GOARCH}.tar.gz; then
             echo "File successfully uploaded"
-            echo "Public URL: https://storage.googleapis.com/${GCS_BUCKET}/initia/initia_Darwin_${GOARCH}.tar.gz" >> $GITHUB_STEP_SUMMARY
+            echo "Public URL: https://storage.googleapis.com/${GCS_BUCKET}/initia/initia_${L1_VERSION}_Darwin_${GOARCH}.tar.gz" >> $GITHUB_STEP_SUMMARY
           else
             echo "File upload failed"
             exit 1
