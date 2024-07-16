@@ -5,42 +5,32 @@ on:
       arch:
         required: true
         type: string
-
-      l1_network_name:
-        required: true
-        type: string
 jobs:
   build:
     runs-on: macos-13
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.22.4'
-
       - name: Set environment variables
         run: |
           echo "GOARCH=${{ inputs.arch }}" >> $GITHUB_ENV
           echo "GOOS=darwin" >> $GITHUB_ENV
-          echo "L1_NETWORK_NAME=${{ inputs.l1_network_name }}" >> $GITHUB_ENV
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             echo "L1_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           else
             echo "L1_VERSION=${GITHUB_SHA}" >> $GITHUB_ENV
           fi
           echo "MOVEVM_VERSION=$(go list -m -f '{{.Version}}' github.com/initia-labs/movevm)" >> $GITHUB_ENV
-
       - name: Print environment variables
         run: |
           echo "GOARCH=${GOARCH}"
           echo "GOOS=${GOOS}"
           echo "L1_VERSION=${L1_VERSION}"
-          echo "L1_NETWORK_NAME=${L1_NETWORK_NAME}"
           echo "MOVEVM_VERSION=${MOVEVM_VERSION}"
-
       - name: Build for Darwin AMD64
         run: |
           cd ../initia
@@ -49,29 +39,22 @@ jobs:
           cp ~/go/pkg/mod/github.com/initia-labs/movevm@${MOVEVM_VERSION}/api/libmovevm.dylib ./
           cp ~/go/pkg/mod/github.com/initia-labs/movevm@${MOVEVM_VERSION}/api/libcompiler.dylib ./
           tar -czvf initia_${L1_VERSION}_Darwin_${GOARCH}.tar.gz initiad libmovevm.dylib libcompiler.dylib
-          mkdir -p ../../networks/${L1_NETWORK_NAME}/binaries/
-          mv ./initia_${L1_VERSION}_Darwin_${GOARCH}.tar.gz ../../networks/${L1_NETWORK_NAME}/binaries/
           rm -rf ./libmovevm.dylib ./libcompiler.dylib ./initiad
-
       - name: Verify build
         run: |
-          ls -lh ../networks/${L1_NETWORK_NAME}/binaries/
-          file ../networks/${L1_NETWORK_NAME}/binaries/initia_${L1_VERSION}_Darwin_${GOARCH}.tar.gz
-
+          ls -lh ./initia_${L1_VERSION}_Darwin_${GOARCH}.tar.gz
+          file ./initia_${L1_VERSION}_Darwin_${GOARCH}.tar.gz
       - name: Google Auth
         uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
-
       - name: Set up Cloud SDK
         uses: 'google-github-actions/setup-gcloud@v2'
-
       - name: Upload to GCS
         env:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
         run: |
-          gsutil cp ../networks/${L1_NETWORK_NAME}/binaries/initia_${L1_VERSION}_Darwin_${GOARCH}.tar.gz gs://${GCS_BUCKET}/initia/
-
+          gsutil cp ./initia_${L1_VERSION}_Darwin_${GOARCH}.tar.gz gs://${GCS_BUCKET}/initia/
       - name: Verify upload and Generate public URL
         env:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
