@@ -15,11 +15,11 @@ jobs:
   #     arch: amd64
   #   secrets: inherit
 
-  # build-linux-arm64:
-  #   uses: ./.github/workflows/build-linux-arm64.yml
-  #   with:
-  #     arch: arm64
-  #   secrets: inherit
+  build-linux-arm64:
+    uses: ./.github/workflows/build-linux-arm64.yml
+    with:
+      arch: arm64
+    secrets: inherit
 
   # build-darwin-amd64:
   #   uses: ./.github/workflows/build-darwin-amd64.yml
@@ -27,8 +27,8 @@ jobs:
   #     arch: amd64
   #   secrets: inherit
 
-  build-darwin-arm64:
-    uses: ./.github/workflows/build-darwin-arm64.yml
-    with:
-      arch: arm64
-    secrets: inherit
+  # build-darwin-arm64:
+  #   uses: ./.github/workflows/build-darwin-arm64.yml
+  #   with:
+  #     arch: arm64
+  #   secrets: inherit
