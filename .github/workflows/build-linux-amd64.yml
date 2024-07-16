@@ -21,7 +21,7 @@ jobs:
 
       - name: Set environment variables
         run: |
-          echo "GOARCH=amd64" >> $GITHUB_ENV
+          echo "GOARCH=${{ inputs.arch }}" >> $GITHUB_ENV
           echo "GOOS=linux" >> $GITHUB_ENV
           echo "GITHUB_REF=${{ github.ref }}" >> $GITHUB_ENV
 
