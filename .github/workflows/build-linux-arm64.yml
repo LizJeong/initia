@@ -52,9 +52,27 @@ jobs:
           export GOOS=${GOOS}
           export CC=${CC}
           export CGO_ENABLED=${CGO_ENABLED}
-          go build -mod=readonly -tags "netgo ledger" -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=initia -X github.com/cosmos/cosmos-sdk/version.AppName=initiad -X github.com/cosmos/cosmos-sdk/version.Version=${VERSION} -X github.com/cosmos/cosmos-sdk/version.Commit=${VERSION} -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -X github.com/cometbft/cometbft/version.TMCoreSemVer=v0.0.0-20240704071957-c46468756c01 -w -s' -trimpath -o build/initiad ./cmd/initiad
+          make build-linux-with-shared-library
           cd ./build
           file initiad
+          echo "Build directory contents:"
+          ls -al
+
+      - name: Verify library files
+        run: |
+          cd ./build
+          if [ ! -f libmovevm.so ]; then
+            echo "libmovevm.so not found"
+            exit 1
+          fi
+          if [ ! -f libcompiler.so ]; then
+            echo "libcompiler.so not found"
+            exit 1
+          fi
+
+      - name: Package build artifacts
+        run: |
+          cd ./build
           mkdir -p initia_${VERSION}
           mv libmovevm.so initia_${VERSION}/libmovevm.${GOARCH}.so
           mv libcompiler.so initia_${VERSION}/libcompiler.${GOARCH}.so
