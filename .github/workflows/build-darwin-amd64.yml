@@ -10,6 +10,7 @@ on:
 jobs:
   setup:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -17,7 +18,7 @@ jobs:
       - name: Install QEMU and dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu qemu-user-static binfmt-support gcc-multilib
+          sudo apt-get install -y qemu qemu-user-static binfmt-support
 
   build:
     needs: setup
@@ -27,6 +28,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Install necessary libraries
+        run: |
+          apt-get update
+          apt-get install -y libdl2
 
       - name: Set up Go
         run: |
