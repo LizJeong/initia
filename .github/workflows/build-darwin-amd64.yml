@@ -42,7 +42,7 @@ jobs:
           chmod +x build/initiad
           ls -lh build/initiad
           file build/initiad
-          ./build/initiad --version || echo "Binary execution failed"
+          ./build/initiad version || echo "Binary execution failed"
 
       - name: Package build artifacts
         run: |
