@@ -1,12 +1,10 @@
 name: Build Darwin AMD64
-
 on:
   workflow_call:
     inputs:
       arch:
         required: true
         type: string
-
 jobs:
   build:
     runs-on: macos-12
@@ -42,7 +40,6 @@ jobs:
           chmod +x build/initiad
           ls -lh build/initiad
           file build/initiad
-          ./build/initiad --version || echo "Binary execution failed"
           ./build/initiad version || echo "Binary execution failed"
 
       - name: Package build artifacts
