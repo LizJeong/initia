@@ -5,12 +5,12 @@ on:
       arch:
         required: true
         type: string
-      l1_network_name:
-        required: true
-        type: string
+      # l1_network_name:
+      #   required: true
+      #   type: string
 jobs:
   build:
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
