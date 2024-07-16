@@ -39,9 +39,14 @@ jobs:
 
       - name: Build for Linux ARM64
         run: |
-          docker run --rm --platform linux/arm64 -v $(pwd):/go/src/app -w /go/src/app -e GOARCH -e GOOS -e VERSION arm64v8/golang:1.22.4 \
+          docker run --rm --platform linux/arm64 -v $(pwd):/go/src/app -w /go/src/app \
+            -e GOARCH -e GOOS -e VERSION \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            arm64v8/golang:1.22.4 \
             sh -c "
-              go mod download && 
+              git config --global --add safe.directory /go/src/app &&
+              go mod download &&
+              apt-get update && apt-get install -y make docker.io &&
               make build-linux-with-shared-library &&
               cd ./build &&
               mkdir -p initia_${VERSION} &&
