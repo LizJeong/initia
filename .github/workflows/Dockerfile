@@ -18,9 +18,15 @@ RUN wget https://golang.org/dl/go1.22.4.linux-amd64.tar.gz && \
 
 ENV PATH=$PATH:/usr/local/go/bin
 
-# Copy the project files into the container
 WORKDIR /workspace
+
+# Copy go.mod and go.sum and download dependencies
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
+# Copy the rest of the project files
 COPY . .
 
-# Install Go dependencies
+# Ensure dependencies are up to date
 RUN go mod tidy
