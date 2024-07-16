@@ -1,4 +1,4 @@
-name: Build Linux ARM64
+name: Build ARM64
 on:
   push:
     branches:
@@ -32,9 +32,11 @@ jobs:
 
       - name: Build for ARM64
         run: |
-          docker run --rm --platform linux/arm64 -v $(pwd):/go/src/app -w /go/src/app -e GOARCH -e GOOS -e VERSION arm64v8/golang:1.22.4 \
-            sh -c "
+          docker run --rm --platform linux/arm64 -v $(pwd):/go/src/app -w /go/src/app -e GOARCH -e GOOS -e VERSION \
+            --entrypoint /bin/sh arm64v8/golang:1.22.4 -c "
+              git config --global --add safe.directory /go/src/app &&
               go mod download && 
+              apk add --no-cache make docker-cli &&
               make build-linux-with-shared-library &&
               cd ./build &&
               mkdir -p initia_${VERSION} &&
