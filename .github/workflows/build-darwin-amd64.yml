@@ -1,4 +1,4 @@
-name: Build Darwin AMD64 with Dockerfile
+name: Build Darwin AMD64
 
 on:
   push:
@@ -9,48 +9,51 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-12
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Build Docker image
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22.4'
+
+      - name: Set environment variables
         run: |
-          docker build -t custom-build-image:latest -f .github/workflows/Dockerfile .
+          echo "GOARCH=amd64" >> $GITHUB_ENV
+          echo "GOOS=darwin" >> $GITHUB_ENV
+          echo "GITHUB_SHA=${{ github.sha }}" >> $GITHUB_ENV
 
-      - name: Run build inside Docker
+      - name: Ensure dependencies
+        run: go mod tidy
+
+      - name: Print environment variables
         run: |
-          docker run --rm \
-            -e GOARCH=amd64 \
-            -e GOOS=darwin \
-            -e GITHUB_SHA=${{ github.sha }} \
-            -v ${{ github.workspace }}:/workspace \
-            custom-build-image:latest \
-            /bin/bash -c "cd /workspace && \
-              git config --global --add safe.directory /workspace && \
-              echo 'Environment Variables:' && \
-              env && \
-              ls -la && \
-              go mod tidy && \
-              echo 'Go mod download log:' && \
-              go mod download -x && \
-              go build -v -mod=readonly -buildvcs=false -tags 'netgo ledger' -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=initia -X github.com/cosmos/cosmos-sdk/version.AppName=initiad -X github.com/cosmos/cosmos-sdk/version.Version=${GITHUB_SHA} -X github.com/cosmos/cosmos-sdk/version.Commit=${GITHUB_SHA} -X 'github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger' -X github.com/cometbft/cometbft/version.TMCoreSemVer=v0.0.0-20240704071957-c46468756c01 -w -s' -trimpath -o build/initiad ./cmd/initiad && \
-              cd ./build && \
-              mkdir -p initia_build && \
-              cp ~/go/pkg/mod/github.com/initia-labs/movevm@*/api/libmovevm.dylib initia_build/libmovevm.${GOARCH}.dylib && \
-              cp ~/go/pkg/mod/github.com/initia-labs/movevm@*/api/libcompiler.dylib initia_build/libcompiler.${GOARCH}.dylib && \
-              mv initiad initia_build/ && \
-              tar -czvf initia_Darwin_${GOARCH}.tar.gz initia_build"
+          echo "GOARCH=${GOARCH}"
+          echo "GOOS=${GOOS}"
+          echo "GITHUB_SHA=${GITHUB_SHA}"
 
+      - name: Build for Darwin AMD64
+        run: |
+          export GOARCH=${GOARCH}
+          export GOOS=${GOOS}
+          go build -mod=readonly -tags "netgo ledger" -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=initia -X github.com/cosmos/cosmos-sdk/version.AppName=initiad -X github.com/cosmos/cosmos-sdk/version.Version=${GITHUB_SHA} -X github.com/cosmos/cosmos-sdk/version.Commit=${GITHUB_SHA} -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -X github.com/cometbft/cometbft/version.TMCoreSemVer=v0.0.0-20240704071957-c46468756c01 -w -s' -trimpath -o build/initiad ./cmd/initiad
+          cd ./build
+          mkdir -p initia_build
+          cp ~/go/pkg/mod/github.com/initia-labs/movevm@*/api/libmovevm.dylib initia_build/libmovevm.${GOARCH}.dylib
+          cp ~/go/pkg/mod/github.com/initia-labs/movevm@*/api/libcompiler.dylib initia_build/libcompiler.${GOARCH}.dylib
+          mv initiad initia_build/
+          tar -czvf initia_Darwin_${GOARCH}.tar.gz initia_build
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v0.6.0
+      - name: Google Auth
+        uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0.2.0
+        uses: 'google-github-actions/setup-gcloud@v2'
 
       - name: Upload to GCS
         env:
