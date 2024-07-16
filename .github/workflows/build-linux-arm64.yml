@@ -14,22 +14,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.22.4'
-
-      - name: Install dependencies for ARM builds
+      - name: Build Docker image for ARM64
         run: |
-          sudo apt-get update
-          sudo apt-get install -y qemu-user-static gcc-aarch64-linux-gnu
+          docker build --build-arg GOARCH=${{ inputs.arch }} -t myapp:${{ inputs.arch }} -f .github/workflows/Dockerfile.arm .
 
-      - name: Set environment variables
+      - name: Save build artifacts
         run: |
-          echo "GOARCH=arm64" >> $GITHUB_ENV
-          echo "GOOS=linux" >> $GITHUB_ENV
-          echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-          echo "CGO_ENABLED=1" >> $GITHUB_ENV
+          docker create --name myapp myapp:${{ inputs.arch }}
+          docker cp myapp:/app/build ./build
+          docker rm myapp
+
+      - name: Create versioned archive
+        run: |
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
             echo "VERSION=${VERSION}" >> $GITHUB_ENV
@@ -37,47 +33,12 @@ jobs:
             VERSION=${GITHUB_SHA}
             echo "VERSION=${VERSION}" >> $GITHUB_ENV
           fi
-
-      - name: Print environment variables
-        run: |
-          echo "GOARCH=${GOARCH}"
-          echo "GOOS=${GOOS}"
-          echo "VERSION=${VERSION}"
-          echo "CC=${CC}"
-          echo "CGO_ENABLED=${CGO_ENABLED}"
-
-      - name: Build for Linux ARM64
-        run: |
-          export GOARCH=${GOARCH}
-          export GOOS=${GOOS}
-          export CC=${CC}
-          export CGO_ENABLED=${CGO_ENABLED}
-          make build-linux-with-shared-library
-          cd ./build
-          file initiad
-          echo "Build directory contents:"
-          ls -al
-
-      - name: Verify library files
-        run: |
-          cd ./build
-          if [ ! -f libmovevm.so ]; then
-            echo "libmovevm.so not found"
-            exit 1
-          fi
-          if [ ! -f libcompiler.so ]; then
-            echo "libcompiler.so not found"
-            exit 1
-          fi
-
-      - name: Package build artifacts
-        run: |
           cd ./build
           mkdir -p initia_${VERSION}
-          mv libmovevm.so initia_${VERSION}/libmovevm.${GOARCH}.so
-          mv libcompiler.so initia_${VERSION}/libcompiler.${GOARCH}.so
+          mv libmovevm.${{ inputs.arch }}.so initia_${VERSION}/libmovevm.${{ inputs.arch }}.so
+          mv libcompiler.${{ inputs.arch }}.so initia_${VERSION}/libcompiler.${{ inputs.arch }}.so
           mv initiad initia_${VERSION}/
-          tar -czvf initia_${VERSION}_Linux_${GOARCH}.tar.gz initia_${VERSION}
+          tar -czvf initia_${VERSION}_Linux_${{ inputs.arch }}.tar.gz initia_${VERSION}
 
       - name: Google Auth
         uses: 'google-github-actions/auth@v2'
@@ -91,15 +52,15 @@ jobs:
         env:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
         run: |
-          gsutil cp ./build/initia_${VERSION}_Linux_${GOARCH}.tar.gz gs://${GCS_BUCKET}/initia/
+          gsutil cp ./build/initia_${VERSION}_Linux_${{ inputs.arch }}.tar.gz gs://${GCS_BUCKET}/initia/
 
       - name: Verify upload and Generate public URL
         env:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
         run: |
-          if gsutil stat gs://${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${GOARCH}.tar.gz; then
+          if gsutil stat gs://${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${{ inputs.arch }}.tar.gz; then
             echo "File successfully uploaded"
-            echo "Public URL: https://storage.googleapis.com/${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${GOARCH}.tar.gz" >> $GITHUB_STEP_SUMMARY
+            echo "Public URL: https://storage.googleapis.com/${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${{ inputs.arch }}.tar.gz" >> $GITHUB_STEP_SUMMARY
           else
             echo "File upload failed"
             exit 1
