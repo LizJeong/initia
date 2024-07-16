@@ -18,13 +18,18 @@ jobs:
       - name: Install QEMU and dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu qemu-user-static binfmt-support
+          sudo apt-get install -y qemu qemu-user-static binfmt-support gcc-multilib
+
+      - name: Install necessary libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libc6
 
   build:
     needs: setup
     runs-on: ubuntu-latest
     container:
-      image: multiarch/qemu-user-static # QEMU를 사용하여 여러 아키텍처를 지원하는 컨테이너 이미지
+      image: multiarch/qemu-user-static
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -32,7 +37,7 @@ jobs:
       - name: Install necessary libraries
         run: |
           apt-get update
-          apt-get install -y libdl2
+          apt-get install -y libdl2 libc6
 
       - name: Set up Go
         run: |
@@ -45,6 +50,7 @@ jobs:
           echo "GOARCH=amd64" >> $GITHUB_ENV
           echo "GOOS=darwin" >> $GITHUB_ENV
           echo "GITHUB_SHA=${{ github.sha }}" >> $GITHUB_ENV
+          echo "/lib/x86_64-linux-gnu" >> $GITHUB_ENV
 
       - name: Ensure dependencies
         run: go mod tidy
@@ -57,6 +63,7 @@ jobs:
 
       - name: Build for Darwin AMD64
         run: |
+          export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
           CC=gcc
           GOARCH=amd64 GOOS=darwin CGO_ENABLED=1 CC=$CC go build -mod=readonly -tags 'netgo ledger' -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=initia -X github.com/cosmos/cosmos-sdk/version.AppName=initiad -X github.com/cosmos/cosmos-sdk/version.Version=${GITHUB_SHA} -X github.com/cosmos/cosmos-sdk/version.Commit=${GITHUB_SHA} -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -X github.com/cometbft/cometbft/version.TMCoreSemVer=v0.0.0-20240704071957-c46468756c01 -w -s' -trimpath -o build/initiad ./cmd/initiad
           cd ./build
