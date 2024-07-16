@@ -8,7 +8,7 @@ on:
       - 'v*'
 
 jobs:
-  setup:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,20 +19,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu qemu-user-static binfmt-support gcc-multilib libc6
-
-  build:
-    needs: setup
-    runs-on: ubuntu-latest
-    container:
-      image: multiarch/qemu-user-static
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install necessary libraries inside container
-        run: |
-          apt-get update
-          apt-get install -y libdl2 libc6
 
       - name: Find libdl.so.2 and set LD_LIBRARY_PATH
         run: |
@@ -49,7 +35,7 @@ jobs:
         run: |
           wget https://golang.org/dl/go1.22.4.linux-amd64.tar.gz
           tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz
-          export PATH=$PATH:/usr/local/go/bin
+          echo "PATH=\$PATH:/usr/local/go/bin" >> $GITHUB_ENV
 
       - name: Set environment variables
         run: |
