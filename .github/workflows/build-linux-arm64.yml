@@ -44,7 +44,11 @@ jobs:
               mv libcompiler.so initia_${VERSION}/libcompiler.${GOARCH}.so
               mv initiad initia_${VERSION}/
               tar -czvf initia_${VERSION}_Linux_${GOARCH}.tar.gz initia_${VERSION}
+              mv initia_${VERSION}_Linux_${GOARCH}.tar.gz /go/src/app/
             "
+      
+      - name: List files
+        run: ls -l
       
       - name: Google Auth
         uses: 'google-github-actions/auth@v2'
@@ -58,7 +62,7 @@ jobs:
         env:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
         run: |
-          gsutil cp initia_${VERSION}_Linux_${GOARCH}.tar.gz gs://${GCS_BUCKET}/initia/
+          gsutil cp ./initia_${VERSION}_Linux_${GOARCH}.tar.gz gs://${GCS_BUCKET}/initia/
       
       - name: Verify upload and Generate public URL
         env:
