@@ -34,7 +34,7 @@ jobs:
         run: |
           docker run --rm --platform linux/arm64 -v $(pwd):/go/src/app -w /go/src/app -e GOARCH -e GOOS -e VERSION arm64v8/golang:1.22.4 \
             sh -c "
-              cd initia &&
+              ls -la &&
               make build-linux-with-shared-library &&
               cd build &&
               mv libmovevm.so libmovevm.${GOARCH}.so &&
@@ -67,4 +67,5 @@ jobs:
           else
             echo "File upload failed"
             exit 1
-          fi
+          fi          
+
