@@ -35,6 +35,7 @@ jobs:
           else
             VERSION=${GITHUB_SHA}
             echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          fi
 
       - name: Print environment variables
         run: |
