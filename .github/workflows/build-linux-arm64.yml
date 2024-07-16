@@ -35,20 +35,15 @@ jobs:
         run: |
           docker run --rm --platform linux/arm64 -v $(pwd):/go/src/app -w /go/src/app -e GOARCH -e GOOS -e VERSION arm64v8/golang:1.22.4 \
             sh -c "
-              git config --global --add safe.directory /go/src/app &&
-              go mod download &&
-              go get github.com/initia-labs/movevm &&
-              cd /go/pkg/mod/github.com/initia-labs/movevm@* &&
-              make build &&
-              cd /go/src/app &&
-              CGO_ENABLED=1 go build -buildvcs=false -o build/initiad ./cmd/initiad &&
-              cd build &&
-              mkdir -p initia_build &&
-              cp /go/pkg/mod/github.com/initia-labs/movevm@*/api/libmovevm.so initia_build/libmovevm.${GOARCH}.so &&
-              cp /go/pkg/mod/github.com/initia-labs/movevm@*/api/libcompiler.so initia_build/libcompiler.${GOARCH}.so &&
-              mv initiad initia_build/ &&
-              tar -czvf initia_${VERSION}_Linux_${GOARCH}.tar.gz initia_build &&
-              mv initia_${VERSION}_Linux_${GOARCH}.tar.gz /go/src/app/
+              export GOARCH=${GOARCH}
+              export GOOS=${GOOS}
+              make build-linux-with-shared-library
+              cd ./build
+              mkdir -p initia_${VERSION}
+              mv libmovevm.so initia_${VERSION}/libmovevm.${GOARCH}.so
+              mv libcompiler.so initia_${VERSION}/libcompiler.${GOARCH}.so
+              mv initiad initia_${VERSION}/
+              tar -czvf initia_${VERSION}_Linux_${GOARCH}.tar.gz initia_${VERSION}
             "
       
       - name: Google Auth
