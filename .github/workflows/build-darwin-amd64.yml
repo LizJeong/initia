@@ -67,7 +67,7 @@ jobs:
         run: |
           if gsutil stat gs://${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${GOARCH}.tar.gz; then
             echo "File successfully uploaded"
-            echo "Public URL: https://storage.googleapis.com/${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${GOARCH}.tar.gz" >> $GITHUB_STEP_SUMMARY
+            echo "Public URL: https://storage.googleapis.com/${GCS_BUCKET}/initia/initia_${VERSION}_Darwin_${GOARCH}.tar.gz" >> $GITHUB_STEP_SUMMARY
           else
             echo "File upload failed"
             exit 1
