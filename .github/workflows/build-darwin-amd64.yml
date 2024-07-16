@@ -18,7 +18,14 @@ jobs:
       - name: Install QEMU and dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu qemu-user-static binfmt-support gcc-multilib libc6
+          sudo apt-get install -y qemu qemu-user-static binfmt-support gcc-multilib libc6 wget ca-certificates
+
+      - name: Set up Go
+        run: |
+          wget https://golang.org/dl/go1.22.4.linux-amd64.tar.gz
+          sudo tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz
+          echo "PATH=$PATH:/usr/local/go/bin" >> $GITHUB_ENV
+          export PATH=$PATH:/usr/local/go/bin
 
       - name: Find libdl.so.2 and set LD_LIBRARY_PATH
         run: |
@@ -28,14 +35,7 @@ jobs:
             echo "libdl.so.2 not found"
             exit 1
           fi
-          export LD_LIBRARY_PATH=$(dirname $LIBDL_PATH):$LD_LIBRARY_PATH
-          echo "LD_LIBRARY_PATH set to: $LD_LIBRARY_PATH"
-
-      - name: Set up Go
-        run: |
-          wget https://golang.org/dl/go1.22.4.linux-amd64.tar.gz
-          tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz
-          echo "PATH=\$PATH:/usr/local/go/bin" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$(dirname $LIBDL_PATH):$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Set environment variables
         run: |
@@ -51,6 +51,7 @@ jobs:
           echo "GOARCH=${GOARCH}"
           echo "GOOS=${GOOS}"
           echo "GITHUB_SHA=${GITHUB_SHA}"
+          echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
 
       - name: Build for Darwin AMD64
         run: |
