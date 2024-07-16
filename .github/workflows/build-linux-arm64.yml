@@ -19,7 +19,7 @@ jobs:
       
       - name: Build Docker image and extract binary
         run: |
-          docker buildx build --platform linux/arm64 -t myapp:arm64 -f Dockerfile.arm --load .
+          docker buildx build --platform linux/arm64 -t myapp:arm64 -f .github/workflows/Dockerfile.arm --load .
           docker create --name temp myapp:arm64
           docker cp temp:/root/initiated ./initiated-arm64
           docker rm temp
