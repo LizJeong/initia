@@ -31,7 +31,7 @@ jobs:
               echo 'Environment Variables:' && \
               env && \
               go mod tidy && \
-              go build -mod=readonly -tags 'netgo ledger' -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=initia -X github.com/cosmos/cosmos-sdk/version.AppName=initiad -X github.com/cosmos/cosmos-sdk/version.Version=${GITHUB_SHA} -X github.com/cosmos/cosmos-sdk/version.Commit=${GITHUB_SHA} -X 'github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger' -X github.com/cometbft/cometbft/version.TMCoreSemVer=v0.0.0-20240704071957-c46468756c01 -w -s' -trimpath -o build/initiad ./cmd/initiad && \
+              go build -v -mod=readonly -tags 'netgo ledger' -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=initia -X github.com/cosmos/cosmos-sdk/version.AppName=initiad -X github.com/cosmos/cosmos-sdk/version.Version=${GITHUB_SHA} -X github.com/cosmos/cosmos-sdk/version.Commit=${GITHUB_SHA} -X 'github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger' -X github.com/cometbft/cometbft/version.TMCoreSemVer=v0.0.0-20240704071957-c46468756c01 -w -s' -trimpath -o build/initiad && \
               cd ./build && \
               mkdir -p initia_build && \
               cp ~/go/pkg/mod/github.com/initia-labs/movevm@*/api/libmovevm.dylib initia_build/libmovevm.${GOARCH}.dylib && \
