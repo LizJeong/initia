@@ -22,6 +22,9 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
       - name: Install cross-compilation tools
         run: |
           sudo apt-get update
@@ -45,17 +48,27 @@ jobs:
           echo "GOOS=${GOOS}"
           echo "VERSION=${VERSION}"
 
+
       - name: Build for ARM64
         run: |
-          export GOARCH=${GOARCH}
-          export GOOS=${GOOS}
-          make build-linux-with-shared-library
-          cd ./build
-          mkdir -p initia_${VERSION}
-          mv libmovevm.so initia_${VERSION}/libmovevm.${GOARCH}.so
-          mv libcompiler.so initia_${VERSION}/libcompiler.${GOARCH}.so
-          mv initiad initia_${VERSION}/
-          tar -czvf initia_${VERSION}_Linux_${GOARCH}.tar.gz initia_${VERSION}
+          docker run --rm --privileged --platform linux/arm64 \
+            -v $(pwd):/go/src/app \
+            -w /go/src/app \
+            -e GOARCH -e GOOS -e VERSION \
+            arm64v8/golang:1.22.4 \
+            sh -c "
+              export GOARCH=${GOARCH}
+              export GOOS=${GOOS}
+              apt-get update && apt-get install -y make
+              make build-linux-with-shared-library
+              cd ./build
+              mkdir -p initia_${VERSION}
+              mv libmovevm.so initia_${VERSION}/libmovevm.${GOARCH}.so
+              mv libcompiler.so initia_${VERSION}/libcompiler.${GOARCH}.so
+              mv initiad initia_${VERSION}/
+              tar -czvf initia_${VERSION}_Linux_${GOARCH}.tar.gz initia_${VERSION}
+              mv initia_${VERSION}_Linux_${GOARCH}.tar.gz /go/src/app/
+            "
 
       - name: List files
         run: ls -l build
