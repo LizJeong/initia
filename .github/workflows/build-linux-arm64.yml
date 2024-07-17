@@ -102,8 +102,8 @@ jobs:
         env:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
         run: |
-          if [ -f ./initia_${VERSION}_Linux_${GOARCH}.tar.gz ]; then
-            gsutil cp ./initia_${VERSION}_Linux_${GOARCH}.tar.gz gs://${GCS_BUCKET}/initia/
+          if [ -f ./initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz ]; then
+            gsutil cp ./initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz gs://${GCS_BUCKET}/initia/
           else
             echo "Build artifact not found"
             exit 1
@@ -113,9 +113,9 @@ jobs:
         env:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
         run: |
-          if gsutil stat gs://${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${GOARCH}.tar.gz; then
+          if gsutil stat gs://${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz; then
             echo "File successfully uploaded"
-            echo "Public URL: https://storage.googleapis.com/${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${GOARCH}.tar.gz" >> $GITHUB_STEP_SUMMARY
+            echo "Public URL: https://storage.googleapis.com/${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz" >> $GITHUB_STEP_SUMMARY
           else
             echo "File upload failed"
             exit 1
