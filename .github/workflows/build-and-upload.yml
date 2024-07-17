@@ -1,12 +1,12 @@
 name: Build and Upload to GCS
 
 on:
-  # push:
-  #   tags:
-  #     - 'v*'
   push:
-    branches:
-      - "main" 
+    tags:
+      - 'v*'
+  # push:
+  #   branches:
+  #     - "main" 
       
 jobs:
   build-linux-amd64:
