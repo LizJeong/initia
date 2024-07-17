@@ -76,13 +76,13 @@ jobs:
           mv initiad initia_${VERSION}/
           mv libmovevm.so initia_${VERSION}/libmovevm.${GOARCH}.so
           mv libcompiler.so initia_${VERSION}/libcompiler.${GOARCH}.so
-          tar -czvf initia_${VERSION}_Linux_${GOARCH}.tar.gz initia_${VERSION}
+          tar -czvf initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz initia_${VERSION}
           mv initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz ../
 
           # 빌드 결과 확인
           cd ..
           ls -l
-          file initia_${VERSION}_Linux_${GOARCH}.tar.gz
+          file initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz
 
           # 빌더 제거
           docker buildx rm arm64-builder
