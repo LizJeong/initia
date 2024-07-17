@@ -31,7 +31,7 @@ jobs:
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
           echo "ARCH_NAME=x86_64" >> $GITHUB_ENV
           # Read MOVEVM_VERSION from config file
-          MOVEVM_VERSION=$(grep MOVEVM_VERSION $GITHUB_WORKSPACE/config | cut -d '=' -f2)
+          MOVEVM_VERSION=$(grep MOVEVM_VERSION $GITHUB_WORKSPACE/.github/workflows/config | cut -d '=' -f2)
           echo "MOVEVM_VERSION=${MOVEVM_VERSION}" >> $GITHUB_ENV
 
       - name: Ensure dependencies
