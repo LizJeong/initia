@@ -39,19 +39,27 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
         run: |
+          # BuildKit 활성화 및 새 빌더 생성
+          docker buildx create --use --name arm64-builder
+      
+          # ARM64용 이미지 빌드
+          docker buildx build --platform linux/arm64 --load --tag initia/initiad-shared:arm64 ./ -f ./shared.Dockerfile
+      
+          # ARM64 이미지를 사용하여 빌드 실행
           docker run --rm --privileged --platform linux/arm64 \
             -v $(pwd):/go/src/app \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -w /go/src/app \
             -e GOARCH -e GOOS -e VERSION \
-            arm64v8/golang:1.22.4 \
+            --security-opt seccomp=unconfined \
+            initia/initiad-shared:arm64 \
             sh -c "
+              set -ex
               git config --global --add safe.directory /go/src/app
               export GOARCH=${GOARCH}
               export GOOS=${GOOS}
               go mod download
               apt-get update && apt-get install -y make docker.io
-              service docker start
               make build-linux-with-shared-library
               cd ./build
               mkdir -p initia_${VERSION}
@@ -61,6 +69,13 @@ jobs:
               tar -czvf initia_${VERSION}_Linux_${GOARCH}.tar.gz initia_${VERSION}
               mv initia_${VERSION}_Linux_${GOARCH}.tar.gz /go/src/app/
             "
+      
+          # 빌드 결과 확인
+          ls -l
+          file initia_${VERSION}_Linux_${GOARCH}.tar.gz
+
+          # 빌더 제거
+          docker buildx rm arm64-builder
       
       - name: List files
         run: ls -l
