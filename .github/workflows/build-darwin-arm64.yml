@@ -50,17 +50,15 @@ jobs:
           cp ~/go/pkg/mod/github.com/initia-labs/movevm@*/api/libmovevm.dylib initia_${VERSION}/libmovevm.${ARCH_NAME}.dylib
           cp ~/go/pkg/mod/github.com/initia-labs/movevm@*/api/libcompiler.dylib initia_${VERSION}/libcompiler.${ARCH_NAME}.dylib
           mv initiad initia_${VERSION}/
-          tar -czvf initia_${VERSION}_Darwin_${ARCH_NAME}.tar.gz initia_${VERSION}
-      - name: Upload Release Asset
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+          tar -czvf initia_${VERSION}_Darwin_${ARCH_NAME}.tar.gz initia_${VERSION} 
+      - name: Release
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./build/initia_${{ env.VERSION }}_Darwin_${{ env.ARCH_NAME }}.tar.gz
-          asset_name: initia_${{ env.VERSION }}_Darwin_${{ env.ARCH_NAME }}.tar.gz
-          asset_content_type: application/gzip          
+          files: |
+            ./build/initia_${{ env.VERSION }}_Darwin_${{ env.ARCH_NAME }}.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
       # - name: Google Auth
       #   uses: 'google-github-actions/auth@v2'
       #   with:
