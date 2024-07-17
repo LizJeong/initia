@@ -74,8 +74,8 @@ jobs:
           cd ./build
           mkdir -p initia_${VERSION}
           mv initiad initia_${VERSION}/
-          mv libmovevm.so initia_${VERSION}/libmovevm.${GOARCH}.so
-          mv libcompiler.so initia_${VERSION}/libcompiler.${GOARCH}.so
+          mv libmovevm.so initia_${VERSION}/libmovevm.${ARCH_NAME}.so
+          mv libcompiler.so initia_${VERSION}/libcompiler.${ARCH_NAME}.so
           tar -czvf initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz initia_${VERSION}
           mv initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz ../
 
