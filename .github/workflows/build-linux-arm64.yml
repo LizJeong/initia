@@ -23,6 +23,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # - name: Set environment variables
+      #   run: |
+      #     echo "GOARCH=${{ inputs.arch }}" >> $GITHUB_ENV
+      #     echo "GOOS=linux" >> $GITHUB_ENV
+      #     if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+      #       VERSION=${GITHUB_REF#refs/tags/}
+      #     else
+      #       VERSION=${GITHUB_SHA}
+      #     fi
+      #     echo "VERSION=${VERSION}" >> $GITHUB_ENV
       - name: Set environment variables
         run: |
           echo "GOARCH=${{ inputs.arch }}" >> $GITHUB_ENV
@@ -30,10 +40,17 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
           else
-            VERSION=${GITHUB_SHA}
+            VERSION="v0.0.0-${GITHUB_SHA::8}"
           fi
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
-
+          if [ "${{ inputs.arch }}" == "amd64" ]; then
+            echo "ARCH_NAME=x86_64" >> $GITHUB_ENV
+          elif [ "${{ inputs.arch }}" == "arm64" ]; then
+            echo "ARCH_NAME=aarch64" >> $GITHUB_ENV
+          else
+            echo "ARCH_NAME=${{ inputs.arch }}" >> $GITHUB_ENV
+          fi
+          
       - name: Build for ARM64
         env:
           DOCKER_BUILDKIT: 1
