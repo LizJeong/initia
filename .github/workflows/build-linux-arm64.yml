@@ -5,6 +5,7 @@ on:
       arch:
         required: true
         type: string
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,12 +19,10 @@ jobs:
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          platforms: linux/arm64
-      
+
       - name: Set environment variables
         run: |
           echo "GOARCH=${{ inputs.arch }}" >> $GITHUB_ENV
@@ -34,38 +33,35 @@ jobs:
             VERSION=${GITHUB_SHA}
           fi
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
-      
+
       - name: Build for ARM64
         env:
           DOCKER_BUILDKIT: 1
         run: |
           # BuildKit 활성화 및 새 빌더 생성
-          docker buildx create --use --name arm64-builder
-      
+          docker buildx create --use --name arm64-builder --platform linux/arm64
+          docker buildx inspect --bootstrap
+
           # ARM64용 이미지 빌드
-          docker buildx build --platform linux/arm64 --load --tag initia/initiad-shared:arm64 ./ -f Dockerfile.arm64
-      
+          docker buildx build --platform linux/arm64 --load --tag initia/initiad-shared:arm64 . -f Dockerfile
+
           # ARM64 이미지를 사용하여 빌드 결과물 추출
           docker create --name temp initia/initiad-shared:arm64
           docker cp temp:/usr/local/bin/initiad ./build/
-          docker cp temp:/lib/libmovevm.so ./build/
-          docker cp temp:/lib/libcompiler.so ./build/
           docker rm temp
-      
+
           # 결과물 패키징
           cd ./build
           mkdir -p initia_${VERSION}
           mv initiad initia_${VERSION}/
-          mv libmovevm.so initia_${VERSION}/libmovevm.${GOARCH}.so
-          mv libcompiler.so initia_${VERSION}/libcompiler.${GOARCH}.so
           tar -czvf initia_${VERSION}_Linux_${GOARCH}.tar.gz initia_${VERSION}
           mv initia_${VERSION}_Linux_${GOARCH}.tar.gz ../
-      
+
           # 빌드 결과 확인
           cd ..
           ls -l
           file initia_${VERSION}_Linux_${GOARCH}.tar.gz
-      
+
           # 빌더 제거
           docker buildx rm arm64-builder
       
