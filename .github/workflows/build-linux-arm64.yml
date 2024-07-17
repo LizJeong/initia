@@ -60,5 +60,36 @@ jobs:
         run: |
           ls -l
           ls -l ./build || echo "Build directory not found"
+      - name: List files
+        run: ls -l
 
-      # ... (나머지 단계는 그대로 유지)
+      - name: Google Auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: Upload to GCS
+        env:
+          GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
+        run: |
+          if [ -f ./initia_${VERSION}_Linux_${GOARCH}.tar.gz ]; then
+            gsutil cp ./initia_${VERSION}_Linux_${GOARCH}.tar.gz gs://${GCS_BUCKET}/initia/
+          else
+            echo "Build artifact not found"
+            exit 1
+          fi
+      
+      - name: Verify upload and Generate public URL
+        env:
+          GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
+        run: |
+          if gsutil stat gs://${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${GOARCH}.tar.gz; then
+            echo "File successfully uploaded"
+            echo "Public URL: https://storage.googleapis.com/${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${GOARCH}.tar.gz" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "File upload failed"
+            exit 1
+          fi
