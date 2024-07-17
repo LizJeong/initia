@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
@@ -43,17 +43,21 @@ jobs:
           docker buildx inspect --bootstrap
 
           # ARM64용 이미지 빌드
-          docker buildx build --platform linux/arm64 --load --tag initia/initiad-shared:arm64 . -f Dockerfile
+          docker buildx build --platform linux/arm64 --load --tag initia/initiad-shared:arm64 . -f shared.Dockerfile
 
           # ARM64 이미지를 사용하여 빌드 결과물 추출
           docker create --name temp initia/initiad-shared:arm64
           docker cp temp:/usr/local/bin/initiad ./build/
+          docker cp temp:/lib/libmovevm.so ./build/
+          docker cp temp:/lib/libcompiler.so ./build/
           docker rm temp
 
           # 결과물 패키징
           cd ./build
           mkdir -p initia_${VERSION}
           mv initiad initia_${VERSION}/
+          mv libmovevm.so initia_${VERSION}/libmovevm.${GOARCH}.so
+          mv libcompiler.so initia_${VERSION}/libcompiler.${GOARCH}.so
           tar -czvf initia_${VERSION}_Linux_${GOARCH}.tar.gz initia_${VERSION}
           mv initia_${VERSION}_Linux_${GOARCH}.tar.gz ../
 
@@ -64,18 +68,18 @@ jobs:
 
           # 빌더 제거
           docker buildx rm arm64-builder
-      
+
       - name: List files
         run: ls -l
-      
+
       - name: Google Auth
         uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
-      
+
       - name: Set up Cloud SDK
         uses: 'google-github-actions/setup-gcloud@v2'
-      
+
       - name: Upload to GCS
         env:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
@@ -86,7 +90,7 @@ jobs:
             echo "Build artifact not found"
             exit 1
           fi
-      
+
       - name: Verify upload and Generate public URL
         env:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
