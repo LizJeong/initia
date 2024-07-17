@@ -42,4 +42,29 @@ jobs:
           cp ~/go/pkg/mod/github.com/initia-labs/movevm@${MOVEVM_VERSION}/api/libcompiler.dylib initia_build/libcompiler.${GOARCH}.dylib
           mv initiad initia_build/
           tar -czvf initia_Darwin_${GOARCH}.tar.gz initia_build
-      # ... 나머지 단계는 그대로 유지 ...
+      - name: Google Auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: Upload to GCS
+        env:
+          GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
+        run: |
+          gsutil cp ./build/initia_Darwin_${GOARCH}.tar.gz gs://${GCS_BUCKET}/initia/
+
+      - name: Verify upload and Generate public URL
+        env:
+          GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
+        run: |
+          if gsutil stat gs://${GCS_BUCKET}/initia/initia_Darwin_${GOARCH}.tar.gz; then
+            echo "File successfully uploaded"
+            echo "Public URL: https://storage.googleapis.com/${GCS_BUCKET}/initia/initia_Darwin_${GOARCH}.tar.gz" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "File upload failed"
+            exit 1
+          fi
+
