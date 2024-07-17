@@ -1,26 +1,34 @@
-# Multistage build for Golang application
-
-# Stage 1: Build the application
 FROM arm64v8/golang:1.22-bullseye AS go-builder
 
-# 필요한 패키지 설치
-RUN apt-get update && apt-get install -y git make
+# Install minimum necessary dependencies, build Cosmos SDK, remove packages
+RUN apt update
+RUN apt install -y curl git build-essential
+# debug: for live editing in the image
+RUN apt install -y vim
 
-WORKDIR /go/src/app
+WORKDIR /code
+COPY . /code/
 
-# 소스 코드 복사
-COPY . .
+RUN LEDGER_ENABLED=false make build
 
-# 빌드 명령어
-RUN go mod download
-RUN go build -o build/initiad ./cmd/initiad
+RUN cp /go/pkg/mod/github.com/initia\-labs/movevm@v*/api/libmovevm.`uname -m`.so /lib/libmovevm.so
+RUN cp /go/pkg/mod/github.com/initia\-labs/movevm@v*/api/libcompiler.`uname -m`.so /lib/libcompiler.so
 
-# Stage 2: Create the runtime image
 FROM arm64v8/ubuntu:20.04
 
 WORKDIR /root
 
-# 빌드된 바이너리와 라이브러리 복사
-COPY --from=go-builder /go/src/app/build/initiad /usr/local/bin/initiad
+COPY --from=go-builder /code/build/initiad /usr/local/bin/initiad
+COPY --from=go-builder /lib/libmovevm.so /lib/libmovevm.so
+COPY --from=go-builder /lib/libcompiler.so /lib/libcompiler.so
 
-CMD ["initiad"]
+# rest server
+EXPOSE 1317
+# grpc
+EXPOSE 9090
+# tendermint p2p
+EXPOSE 26656
+# tendermint rpc
+EXPOSE 26657
+
+CMD ["/usr/local/bin/initiad", "version"]
