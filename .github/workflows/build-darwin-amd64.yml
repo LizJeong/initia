@@ -20,7 +20,7 @@ jobs:
           echo "GOARCH=${{ inputs.arch }}" >> $GITHUB_ENV
           echo "GOOS=darwin" >> $GITHUB_ENV
           echo "GITHUB_SHA=${{ github.sha }}" >> $GITHUB_ENV
-          echo "MOVEVM_VERSION=v0.2.12" >> $GITHUB_ENV
+          echo "MOVEVM_VERSION=v0.3.4" >> $GITHUB_ENV
       - name: Ensure dependencies
         run: |
           go mod tidy
