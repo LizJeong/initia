@@ -43,7 +43,7 @@ jobs:
           docker buildx inspect --bootstrap
 
           # ARM64용 이미지 빌드
-          docker buildx build --platform linux/arm64 --load --tag initia/initiad-shared:arm64 . -f Dockerfile
+          docker buildx build --platform linux/arm64 --load --tag initia/initiad-shared:arm64 . -f Dockerfile.arm64
 
           # ARM64 이미지를 사용하여 빌드 결과물 추출
           mkdir -p ./build
