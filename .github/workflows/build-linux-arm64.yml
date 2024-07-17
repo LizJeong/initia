@@ -14,12 +14,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22.4'
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      
+
+      - name: Install cross-compilation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
       - name: Set environment variables
         run: |
           echo "GOARCH=arm64" >> $GITHUB_ENV
@@ -33,26 +40,17 @@ jobs:
 
       - name: Build for ARM64
         run: |
-          docker run --rm --platform linux/arm64 \
-            -v $(pwd):/go/src/app \
-            -w /go/src/app \
-            -e GOARCH -e GOOS -e VERSION \
-            arm64v8/golang:1.22.4 \
-            sh -c "
-              git config --global --add safe.directory /go/src/app
-              go mod download
-              go build -o build/initiad ./cmd/initiad
-              cd build
-              mkdir -p initia_${VERSION}
-              mv initiad initia_${VERSION}/
-              cp /go/pkg/mod/github.com/initia-labs/movevm@*/api/libmovevm.so initia_${VERSION}/libmovevm.${GOARCH}.so
-              cp /go/pkg/mod/github.com/initia-labs/movevm@*/api/libcompiler.so initia_${VERSION}/libcompiler.${GOARCH}.so
-              tar -czvf initia_${VERSION}_Linux_${GOARCH}.tar.gz initia_${VERSION}
-              mv initia_${VERSION}_Linux_${GOARCH}.tar.gz /go/src/app/
-            "
+          go mod download
+          CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc GOARCH=arm64 GOOS=linux go build -o build/initiad ./cmd/initiad
+          mkdir -p build/initia_${VERSION}
+          mv build/initiad build/initia_${VERSION}/
+          # Note: You might need to adjust the path for libmovevm.so and libcompiler.so
+          cp $(go env GOMODCACHE)/github.com/initia-labs/movevm@*/api/libmovevm.so build/initia_${VERSION}/libmovevm.${GOARCH}.so
+          cp $(go env GOMODCACHE)/github.com/initia-labs/movevm@*/api/libcompiler.so build/initia_${VERSION}/libcompiler.${GOARCH}.so
+          tar -czvf build/initia_${VERSION}_Linux_${GOARCH}.tar.gz -C build initia_${VERSION}
 
       - name: List files
-        run: ls -l
+        run: ls -l build
 
       - name: Google Auth
         uses: 'google-github-actions/auth@v2'
@@ -66,8 +64,8 @@ jobs:
         env:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
         run: |
-          if [ -f ./initia_${VERSION}_Linux_${GOARCH}.tar.gz ]; then
-            gsutil cp ./initia_${VERSION}_Linux_${GOARCH}.tar.gz gs://${GCS_BUCKET}/initia/
+          if [ -f ./build/initia_${VERSION}_Linux_${GOARCH}.tar.gz ]; then
+            gsutil cp ./build/initia_${VERSION}_Linux_${GOARCH}.tar.gz gs://${GCS_BUCKET}/initia/
           else
             echo "Build artifact not found"
             exit 1
