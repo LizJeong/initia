@@ -46,6 +46,7 @@ jobs:
               go mod download
               apt-get update && apt-get install -y make docker.io
               service docker start
+              docker build --platform linux/arm64 --tag initia/initiad-shared ./ -f ./shared.Dockerfile
               make build-linux-with-shared-library
               cd ./build
               mkdir -p initia_${VERSION}
