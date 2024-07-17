@@ -89,34 +89,41 @@ jobs:
 
       - name: List files
         run: ls -l
-
-      - name: Google Auth
-        uses: 'google-github-actions/auth@v2'
+        
+      - name: Release
+        uses: softprops/action-gh-release@v1
         with:
-          credentials_json: '${{ secrets.GCP_SA_KEY }}'
-
-      - name: Set up Cloud SDK
-        uses: 'google-github-actions/setup-gcloud@v2'
-
-      - name: Upload to GCS
+          files: |
+            ./build/initia_${{ env.VERSION }}_Linux_${{ env.ARCH_NAME }}.tar.gz
         env:
-          GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
-        run: |
-          if [ -f ./initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz ]; then
-            gsutil cp ./initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz gs://${GCS_BUCKET}/initia/
-          else
-            echo "Build artifact not found"
-            exit 1
-          fi
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+      # - name: Google Auth
+      #   uses: 'google-github-actions/auth@v2'
+      #   with:
+      #     credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-      - name: Verify upload and Generate public URL
-        env:
-          GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
-        run: |
-          if gsutil stat gs://${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz; then
-            echo "File successfully uploaded"
-            echo "Public URL: https://storage.googleapis.com/${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "File upload failed"
-            exit 1
-          fi
+      # - name: Set up Cloud SDK
+      #   uses: 'google-github-actions/setup-gcloud@v2'
+
+      # - name: Upload to GCS
+      #   env:
+      #     GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
+      #   run: |
+      #     if [ -f ./initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz ]; then
+      #       gsutil cp ./initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz gs://${GCS_BUCKET}/initia/
+      #     else
+      #       echo "Build artifact not found"
+      #       exit 1
+      #     fi
+
+      # - name: Verify upload and Generate public URL
+      #   env:
+      #     GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
+      #   run: |
+      #     if gsutil stat gs://${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz; then
+      #       echo "File successfully uploaded"
+      #       echo "Public URL: https://storage.googleapis.com/${GCS_BUCKET}/initia/initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz" >> $GITHUB_STEP_SUMMARY
+      #     else
+      #       echo "File upload failed"
+      #       exit 1
+      #     fi
