@@ -32,14 +32,14 @@ jobs:
       - name: Ensure dependencies
         run: |
           go mod tidy
-          go get github.com/initia-labs/movevm@*
+          go get github.com/initia-labs/movevm@latest
       - name: Print environment variables
         run: |
           echo "GOARCH=${GOARCH}"
           echo "GOOS=${GOOS}"
           echo "VERSION=${VERSION}"
           echo "ARCH_NAME=${ARCH_NAME}"
-          echo "MOVEVM_VERSION=*"
+          echo "MOVEVM_VERSION=$(go list -m github.com/initia-labs/movevm)"
       - name: Build for Darwin AMD64
         run: |
           go build -mod=readonly -tags "netgo ledger" -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=initia -X github.com/cosmos/cosmos-sdk/version.AppName=initiad -X github.com/cosmos/cosmos-sdk/version.Version=${VERSION} -X github.com/cosmos/cosmos-sdk/version.Commit=${GITHUB_SHA} -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -X github.com/cometbft/cometbft/version.TMCoreSemVer=v0.0.0-20240704071957-c46468756c01 -w -s' -trimpath -o build/initiad ./cmd/initiad
