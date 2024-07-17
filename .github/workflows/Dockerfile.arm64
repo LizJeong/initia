@@ -1,0 +1,25 @@
+FROM --platform=linux/arm64 arm64v8/golang:1.22-bullseye AS go-builder
+
+# 필요한 패키지 설치
+RUN apt-get update && apt-get install -y git make
+
+WORKDIR /go/src/app
+
+# 소스 코드 복사
+COPY . .
+
+# 빌드 명령어
+RUN go mod download
+RUN make build-linux-with-shared-library
+
+# 실행 단계
+FROM --platform=linux/arm64 arm64v8/ubuntu:20.04
+
+WORKDIR /root
+
+# 빌드된 바이너리와 라이브러리 복사
+COPY --from=go-builder /go/src/app/build/initiad /usr/local/bin/initiad
+COPY --from=go-builder /go/src/app/build/libmovevm.so /lib/libmovevm.so
+COPY --from=go-builder /go/src/app/build/libcompiler.so /lib/libcompiler.so
+
+CMD ["initiad"]
