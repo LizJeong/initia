@@ -1,3 +1,6 @@
+# Multistage build for Golang application
+
+# Stage 1: Build the application
 FROM arm64v8/golang:1.22-bullseye AS go-builder
 
 # 필요한 패키지 설치
@@ -12,7 +15,7 @@ COPY . .
 RUN go mod download
 RUN go build -o build/initiad ./cmd/initiad
 
-# 실행 단계
+# Stage 2: Create the runtime image
 FROM arm64v8/ubuntu:20.04
 
 WORKDIR /root
