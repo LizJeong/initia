@@ -1,4 +1,4 @@
-name: Build Darwin ARM64
+name: Build Darwin AMD64
 on:
   workflow_call:
     inputs:
@@ -24,22 +24,22 @@ jobs:
       - name: Ensure dependencies
         run: |
           go mod tidy
-          go get github.com/initia-labs/movevm@v0.3.4
+          go get github.com/initia-labs/movevm@${MOVEVM_VERSION}
       - name: Print environment variables
         run: |
           echo "GOARCH=${GOARCH}"
           echo "GOOS=${GOOS}"
           echo "GITHUB_SHA=${GITHUB_SHA}"
           echo "MOVEVM_VERSION=${MOVEVM_VERSION}"
-      - name: Build for Darwin ARM64
+      - name: Build for Darwin AMD64
         run: |
           export GOARCH=${GOARCH}
           export GOOS=${GOOS}
           go build -mod=readonly -tags "netgo ledger" -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=initia -X github.com/cosmos/cosmos-sdk/version.AppName=initiad -X github.com/cosmos/cosmos-sdk/version.Version=${GITHUB_SHA} -X github.com/cosmos/cosmos-sdk/version.Commit=${GITHUB_SHA} -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -X github.com/cometbft/cometbft/version.TMCoreSemVer=v0.0.0-20240704071957-c46468756c01 -w -s' -trimpath -o build/initiad ./cmd/initiad
           cd ./build
           mkdir -p initia_build
-          cp ~/go/pkg/mod/github.com/initia-labs/movevm@v0.3.4/api/libmovevm.dylib initia_build/libmovevm.${GOARCH}.dylib
-          cp ~/go/pkg/mod/github.com/initia-labs/movevm@v0.3.4/api/libcompiler.dylib initia_build/libcompiler.${GOARCH}.dylib
+          cp ~/go/pkg/mod/github.com/initia-labs/movevm@${MOVEVM_VERSION}/api/libmovevm.dylib initia_build/libmovevm.${GOARCH}.dylib
+          cp ~/go/pkg/mod/github.com/initia-labs/movevm@${MOVEVM_VERSION}/api/libcompiler.dylib initia_build/libcompiler.${GOARCH}.dylib
           mv initiad initia_build/
           tar -czvf initia_Darwin_${GOARCH}.tar.gz initia_build
       - name: Google Auth
