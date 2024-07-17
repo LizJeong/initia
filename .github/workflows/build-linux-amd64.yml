@@ -1,17 +1,17 @@
 name: Build Linux AMD64
 
-# on:
-#   workflow_call:
-#     inputs:
-#       arch:
-#         required: true
-#         type: string
-
-
 on:
-  push:
-    tags:
-      - 'v*' 
+  workflow_call:
+    inputs:
+      arch:
+        required: true
+        type: string
+
+
+# on:
+#   push:
+#     tags:
+#       - 'v*' 
 
 
 jobs:
