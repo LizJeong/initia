@@ -19,6 +19,9 @@ jobs:
           go-version: '1.22.4'
       - name: Set environment variables
         run: |
+          # Read MOVEVM_VERSION from config file
+          MOVEVM_VERSION=$(grep MOVEVM_VERSION $GITHUB_WORKSPACE/.github/workflows/config | cut -d '=' -f2)
+          echo "MOVEVM_VERSION=${MOVEVM_VERSION}" >> $GITHUB_ENV        
           echo "GOARCH=${{ inputs.arch }}" >> $GITHUB_ENV
           echo "GOOS=darwin" >> $GITHUB_ENV
           if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
@@ -47,8 +50,8 @@ jobs:
           go build -mod=readonly -tags "netgo ledger" -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=initia -X github.com/cosmos/cosmos-sdk/version.AppName=initiad -X github.com/cosmos/cosmos-sdk/version.Version=${VERSION} -X github.com/cosmos/cosmos-sdk/version.Commit=${GITHUB_SHA} -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -X github.com/cometbft/cometbft/version.TMCoreSemVer=v0.0.0-20240704071957-c46468756c01 -w -s' -trimpath -o build/initiad ./cmd/initiad
           cd ./build
           mkdir -p initia_${VERSION}
-          cp ~/go/pkg/mod/github.com/initia-labs/movevm@*/api/libmovevm.dylib initia_${VERSION}/libmovevm.${ARCH_NAME}.dylib
-          cp ~/go/pkg/mod/github.com/initia-labs/movevm@*/api/libcompiler.dylib initia_${VERSION}/libcompiler.${ARCH_NAME}.dylib
+          cp ~/go/pkg/mod/github.com/initia-labs/movevm@${MOVEVM_VERSION}/api/libmovevm.dylib initia_${VERSION}/libmovevm.${ARCH_NAME}.dylib
+          cp ~/go/pkg/mod/github.com/initia-labs/movevm@${MOVEVM_VERSION}/api/libcompiler.dylib initia_${VERSION}/libcompiler.${ARCH_NAME}.dylib
           mv initiad initia_${VERSION}/
           tar -czvf initia_${VERSION}_Darwin_${ARCH_NAME}.tar.gz initia_${VERSION} 
       - name: Release
