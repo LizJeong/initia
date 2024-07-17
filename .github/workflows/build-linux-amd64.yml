@@ -65,7 +65,7 @@ jobs:
           mv libmovevm.so initia_${VERSION}/libmovevm.${GOARCH}.so
           mv libcompiler.so initia_${VERSION}/libcompiler.${GOARCH}.so
           mv initiad initia_${VERSION}/
-          tar -czvf initia_${VERSION}_Linux_${GOARCH}.tar.gz initia_${VERSION}
+          tar -czvf initia_${VERSION}_Linux_${ARCH_NAME}.tar.gz initia_${VERSION}
 
       - name: Google Auth
         uses: 'google-github-actions/auth@v2'
