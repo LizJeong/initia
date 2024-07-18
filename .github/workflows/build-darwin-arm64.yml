@@ -75,7 +75,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            initia_${{ env.VERSION }}_Darwin_${{ env.ARCH_NAME }}.tar.gz
+            ./initia_${{ env.VERSION }}_Darwin_${{ env.ARCH_NAME }}.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
