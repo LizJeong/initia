@@ -40,8 +40,12 @@ jobs:
           else
             echo "ARCH_NAME=${{ inputs.arch }}" >> $GITHUB_ENV
           fi
+          
       - name: Ensure dependencies
-        run: go mod tidy
+        run: |
+          go mod tidy
+          go get github.com/initia-labs/movevm@${MOVEVM_VERSION}
+          
       - name: Print environment variables
         run: |
           echo "GOARCH=${GOARCH}"
