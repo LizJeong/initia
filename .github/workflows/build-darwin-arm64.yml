@@ -67,7 +67,7 @@ jobs:
           && cp ~/go/pkg/mod/github.com/initia-labs/movevm@"$MOVEVM_VERSION"/api/libcompiler.dylib ./ \
           && tar -czvf initia_"$VERSION"_Darwin_"$ARCH_NAME".tar.gz initiad libmovevm.dylib libcompiler.dylib \
           && mv ./initia_"$VERSION"_Darwin_"$ARCH_NAME".tar.gz ../../initia_"$VERSION"_Darwin_"$ARCH_NAME".tar.gz \
-          && ls -al ../../
+          && ls -al ../../ \
           && rm -rf ./libmovevm.dylib ./libcompiler.dylib ./initiad
 
       - name: Release
