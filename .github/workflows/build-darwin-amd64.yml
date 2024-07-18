@@ -21,6 +21,8 @@ jobs:
 
       - name: Set environment variables
         run: |
+          L1_NETWORK_NAME="initiation-1"
+          echo "L1_NETWORK_NAME=${L1_NETWORK_NAME}" >> $GITHUB_ENV        
           echo "GOARCH=${{ inputs.arch }}" >> $GITHUB_ENV
           echo "GOOS=darwin" >> $GITHUB_ENV
           if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
@@ -46,21 +48,23 @@ jobs:
           echo "VERSION=${VERSION}"
           echo "ARCH_NAME=${ARCH_NAME}"
           echo "MOVEVM_VERSION=${MOVEVM_VERSION}"
+          echo "L1_NETWORK_NAME=${L1_NETWORK_NAME}"
 
-      - name: Build for Darwin AMD64
+      - name: Build and Package for Darwin ADM64
         run: |
-          go build -mod=readonly -tags "netgo ledger" -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=initia -X github.com/cosmos/cosmos-sdk/version.AppName=initiad -X github.com/cosmos/cosmos-sdk/version.Version=${VERSION} -X github.com/cosmos/cosmos-sdk/version.Commit=${GITHUB_SHA} -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -X github.com/cometbft/cometbft/version.TMCoreSemVer=v0.0.0-20240704071957-c46468756c01 -w -s' -trimpath -o build/initiad ./cmd/initiad
-          cd ./build
-          mkdir -p initia_${VERSION}
-          cp ~/go/pkg/mod/github.com/initia-labs/movevm@${MOVEVM_VERSION}/api/libmovevm.dylib initia_${VERSION}/libmovevm.${ARCH_NAME}.dylib
-          cp ~/go/pkg/mod/github.com/initia-labs/movevm@${MOVEVM_VERSION}/api/libcompiler.dylib initia_${VERSION}/libcompiler.${ARCH_NAME}.dylib
-          mv initiad initia_${VERSION}/
-          tar -czvf initia_${VERSION}_Darwin_${ARCH_NAME}.tar.gz initia_${VERSION}
-
+          cd ../initia \
+          && make build \
+          && cd ./build \
+          && cp ~/go/pkg/mod/github.com/initia-labs/movevm@"$MOVEVM_VERSION"/api/libmovevm.dylib ./ \
+          && cp ~/go/pkg/mod/github.com/initia-labs/movevm@"$MOVEVM_VERSION"/api/libcompiler.dylib ./ \
+          && tar -czvf initia_"$VERSION"_Darwin_"$ARCH_NAME".tar.gz initiad libmovevm.dylib libcompiler.dylib \
+          && mv ./initia_"$VERSION"_Darwin_"$ARCH_NAME".tar.gz $GITHUB_WORKSPACE/ \
+          && rm -rf ./libmovevm.dylib ./libcompiler.dylib ./initiad
+  
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./build/initia_${{ env.VERSION }}_Darwin_${{ env.ARCH_NAME }}.tar.gz
+            initia_${{ env.VERSION }}_Darwin_${{ env.ARCH_NAME }}.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
